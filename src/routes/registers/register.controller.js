@@ -5,21 +5,9 @@ async function getRegisters(request, response) {
   const { authorization } = request.headers;
   const token = authorization?.replace('Bearer ', '');
 
-  console.log('Register request with token: ', token);
-
   try {
     const session = await db.collection('sessions').findOne({ token });
-    console.log('Current session: : ', session);
-
-    console.log('List of sessions: ', await db.collection('sessions').find().toArray());
-    // console.log('Session: ', session, token);
-
-    // if (!session || !token) return response.sendStatus(401);
-
-
     const registers = await db.collection('registers').find({ userId: ObjectId(session.userId) }).toArray();
-
-    // console.log('User registers: ', registers[0].registers);
 
     return response.status(200).send(registers);
   } catch (error) {
@@ -34,14 +22,9 @@ async function addRegister(request, response, next) {
   const token = authorization?.replace('Bearer ', '');
 
   try {
-    console.log('Token from addRegister: ', token)
     const session = await db.collection('sessions').findOne({ token });
 
-    console.log('Session: ', session);
-    console.log('UserId from session: ', session.userId)
-
     if (!session || !token) return response.sendStatus(401);
-
 
     await db.collection('registers').updateOne({
       userId: ObjectId(session.userId)
@@ -95,4 +78,35 @@ async function editRegister(request, response) {
   }
 };
 
-export { getRegisters, addRegister, editRegister };
+async function deleteRegister(request, response) {
+  const {
+    userId,
+    name: registerIndex,
+  } = request.body;
+
+  try {
+    const userRegisters = await db.collection('registers').find({
+      userId: ObjectId(userId),
+    }).toArray();
+
+    const registersFiltered = userRegisters[0].registers.filter((register, index) => index !== Number(registerIndex));
+
+    await db.collection('registers').updateOne(
+      { userId: ObjectId(userId) },
+      {
+        $set: { userId: ObjectId(userId), registers: registersFiltered },
+      },
+      { upsert: true },
+    );
+
+    const registers = await db.collection('registers').find({ userId: ObjectId(userId) }).toArray();
+
+    return response.status(201).send(registers);
+  } catch (error) {
+    console.log('Error: ', error);
+    return response.status(500).send(error);
+  }
+};
+
+
+export { getRegisters, addRegister, editRegister, deleteRegister };

@@ -1,14 +1,12 @@
 import db from '../../server.js'
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
-import { ObjectId } from 'mongodb';
 
 async function signUp(request, response) {
   const data = request.body;
 
   try {
     const salt = 10;
-
     const passwordHash = bcrypt.hashSync(data.password, salt)
 
     if (await db.collection('users').findOne({ email: data.email })) {
@@ -27,8 +25,6 @@ async function signUp(request, response) {
 async function signIn(request, response) {
   const data = request.body;
 
-  // console.log('Sign-in request')
-
   try {
     const user = await db.collection('users').findOne({ email: data.email });
 
@@ -38,11 +34,7 @@ async function signIn(request, response) {
 
     const token = uuid();
 
-    // console.log('Sign-in user id: ', user._id)
-
     const previousSession = await db.collection('sessions').findOne({ userId: user._id });
-
-    // console.log('Previous session: ', previousSession);
 
     if (previousSession) {
       await db.collection('sessions').updateOne(
@@ -50,14 +42,10 @@ async function signIn(request, response) {
         { $set: { token } },
       );
 
-      // console.log('New session: ', await db.collection('sessions').findOne({ userId: user._id }));
-
       return response.status(201).send({ token, userId: user._id });
     }
 
     await db.collection('sessions').insertOne({ 'userId': user._id, token });
-
-    // console.log('Sign-in token: ', token)
 
     return response.status(201).send({ token, userId: user._id });
   } catch (error) {
