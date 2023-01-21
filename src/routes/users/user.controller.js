@@ -42,12 +42,13 @@ async function signIn(request, response) {
         { $set: { token } },
       );
 
-      return response.status(201).send({ token, userId: user._id });
+      return response.status(201).send({ token, userId: user._id, name: user.name });
     }
 
     await db.collection('sessions').insertOne({ 'userId': user._id, token });
 
-    return response.status(201).send({ token, userId: user._id });
+    return response.status(201).send({ token, userId: user._id, name: user.name });
+
   } catch (error) {
     console.log('Error at signIn: ', error);
     return response.sendStatus(500);
