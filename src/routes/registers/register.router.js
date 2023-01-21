@@ -8,6 +8,7 @@ registerRouter.get('/home', getRegisters);
 registerRouter.put('/nova-entrada', validateRegister, addRegister);
 registerRouter.put('/nova-saida', validateRegister, addRegister);
 registerRouter.put('/editar-entrada/:id', editRegister);
+registerRouter.put('/editar-saida/:id', editRegister);
 registerRouter.put('/home', deleteRegister);
 
 export default registerRouter;
