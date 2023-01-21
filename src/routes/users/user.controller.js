@@ -27,6 +27,8 @@ async function signUp(request, response) {
 async function signIn(request, response) {
   const data = request.body;
 
+  // console.log('Sign-in request')
+
   try {
     const user = await db.collection('users').findOne({ email: data.email });
 
@@ -36,24 +38,46 @@ async function signIn(request, response) {
 
     const token = uuid();
 
-    const previousSession = await db.collection('sessions').findOne({ 'userId': user._id });
+    // console.log('Sign-in user id: ', user._id)
+
+    const previousSession = await db.collection('sessions').findOne({ userId: user._id });
+
+    // console.log('Previous session: ', previousSession);
 
     if (previousSession) {
       await db.collection('sessions').updateOne(
-        { 'userId': ObjectId(user._id) },
+        { 'userId': user._id },
         { $set: { token } },
       );
 
-      return response.status(201).send(token);
+      // console.log('New session: ', await db.collection('sessions').findOne({ userId: user._id }));
+
+      return response.status(201).send({ token, userId: user._id });
     }
 
     await db.collection('sessions').insertOne({ 'userId': user._id, token });
 
-    return response.status(201).send(token);
+    // console.log('Sign-in token: ', token)
+
+    return response.status(201).send({ token, userId: user._id });
+  } catch (error) {
+    console.log('Error at signIn: ', error);
+    return response.sendStatus(500);
+  }
+};
+
+async function signOut(request, response) {
+  const { authorization } = request.headers;
+
+  try {
+    await db.collection('sessions').deleteOne({ authorization });
+
+    return response.status(200).send('Deleted');
   } catch (error) {
     console.log('Error: ', error);
     return response.sendStatus(500);
   }
+
 };
 
 async function getSessions(request, response) {
@@ -67,4 +91,4 @@ async function getSessions(request, response) {
   }
 };
 
-export { signUp, signIn, getSessions };
+export { signUp, signIn, signOut, getSessions };

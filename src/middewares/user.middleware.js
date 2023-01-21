@@ -5,6 +5,8 @@ async function validateSignUp(request, response, next) {
   const signUp = request.body;
   const validation = signUpSchema.validate(signUp);
 
+  console.log(signUp)
+
   if (validation.error) {
     return response.status(422).send('Invalid signup infos');
   }
