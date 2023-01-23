@@ -7,6 +7,11 @@ async function getRegisters(request, response) {
 
   try {
     const session = await db.collection('sessions').findOne({ token });
+
+    if (!session) {
+      return response.status(401).send('Não autorizado');
+    };
+
     const registers = await db.collection('registers').find({ userId: ObjectId(session.userId) }).toArray();
 
     return response.status(200).send(registers);
@@ -55,8 +60,14 @@ async function editRegister(request, response) {
     userId,
     index: registerIndex,
   } = request.body;
+  const { authorization } = request.headers;
+  const token = authorization?.replace('Bearer ', '');
+  const session = await db.collection('sessions').findOne({ token });
 
   try {
+    if (!session || !token) {
+      return response.status(401).send('Não autorizado');
+    };
     const userRegisters = await db.collection('registers').find({
       userId: ObjectId(userId),
     }).toArray();
@@ -83,8 +94,14 @@ async function deleteRegister(request, response) {
     userId,
     name: registerIndex,
   } = request.body;
+  const { authorization } = request.headers;
+  const token = authorization?.replace('Bearer ', '');
+  const session = await db.collection('sessions').findOne({ token });
 
   try {
+    if (!session || !token) {
+      return response.status(401).send('Não autorizado');
+    };
     const userRegisters = await db.collection('registers').find({
       userId: ObjectId(userId),
     }).toArray();
